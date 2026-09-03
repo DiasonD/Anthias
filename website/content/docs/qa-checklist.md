@@ -41,15 +41,16 @@ Running unit tests is a good way to make sure that the code is working as expect
 6. Enable **Default assets** and make sure that the default assets are added to the list of active assets. Also make sure that the assets are being displayed on the screen.
 7. Disable **Default assets** and make sure that the assets are deleted from the list of active assets. Also make sure that the assets are not being displayed on the screen.
 8. Enable **Shuffle playlist**. Activate some assets and make sure that the assets are being displayed in random order.
-9. Enable **Use 24-hour clock**. Go to the assets page and make sure that the time field uses correct format.
-10. Enable any video asset with sounds and choose **HDMI** for the **Audio output**. Make sure that the sound works.
-11. Enable any video file with sounds and choose **3.5mm** jack for the **Audio output**. Make sure that the sound works.
-12. Choose any format for the **Date format**. Go to the assets page and make sure that the date field uses the correct format.
-13. Enable authentication by selecting **Basic** from the **Authentication** dropdown, set a username + password, save, then reload. You should be prompted to log in. Verify both credential paths still reach the API:
+9. Enable **Sync playlist to clock** on two devices with the same active assets and the same duration. Make sure both switch assets at the same moment, and that enabling it turns **Shuffle playlist** off.
+10. Enable **Use 24-hour clock**. Go to the assets page and make sure that the time field uses correct format.
+11. Enable any video asset with sounds and choose **HDMI** for the **Audio output**. Make sure that the sound works.
+12. Enable any video file with sounds and choose **3.5mm** jack for the **Audio output**. Make sure that the sound works.
+13. Choose any format for the **Date format**. Go to the assets page and make sure that the date field uses the correct format.
+14. Enable authentication by selecting **Basic** from the **Authentication** dropdown, set a username + password, save, then reload. You should be prompted to log in. Verify both credential paths still reach the API:
     * Browser session: log in via the form, dashboard works.
     * Legacy HTTP Basic: `curl -u user:pass http://<device>/api/v2/assets` still works, and the server logs a `DEPRECATED: HTTP Basic auth used …` warning.
-14. Click the **Get Backup** button. Delete all assets. Click on **Upload and Recover** and make sure that the assets are restored.
-15. Try to reboot or shutdown the device by clicking on the **Reboot** or **Shutdown** buttons, respectively. Make sure that the device does the corresponding action.
-16. Go to the **System Info** page and make sure that all information are correct.
-17. Make sure that all the footer links are being displayed correctly.
-18. Connect to the device by ssh. Run `./bin/enable_ssl.sh` script. Make sure the site URL uses SSL.
+15. Click the **Get Backup** button. Delete all assets. Click on **Upload and Recover** and make sure that the assets are restored.
+16. Try to reboot or shutdown the device by clicking on the **Reboot** or **Shutdown** buttons, respectively. Make sure that the device does the corresponding action.
+17. Go to the **System Info** page and make sure that all information are correct.
+18. Make sure that all the footer links are being displayed correctly.
+19. Connect to the device by ssh. Run `./bin/enable_ssl.sh` script. Make sure the site URL uses SSL.

@@ -2,6 +2,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 from os import path
+from time import time
 from typing import Any
 
 from django.utils import timezone
@@ -17,6 +18,43 @@ logger = logging.getLogger(__name__)
 WINDOWED_DEADLINE_CAP_SECONDS = 60
 
 _sysrandom = secrets.SystemRandom()
+
+
+def clock_sync_duration(assets: list[dict[str, Any]]) -> int:
+    """Slot length for clock-synced playback, or 0 when it doesn't apply.
+
+    With ``clock_sync_playlist`` on, every player derives its position
+    from the wall clock so devices with identical playlists switch at
+    the same moment. That only works when all assets share one
+    duration, so the first asset's duration is the slot length.
+    """
+    if not settings['clock_sync_playlist'] or not assets:
+        return 0
+    return max(int(assets[0].get('duration') or 0), 0)
+
+
+def clock_slot(count: int, duration: int, now: float | None = None) -> int:
+    """Playlist index for the current wall-clock slot."""
+    now = time() if now is None else now
+    return int(now // duration) % count
+
+
+def seconds_to_next_slot(duration: int, now: float | None = None) -> float:
+    """Time left until the wall clock reaches the next slot boundary."""
+    now = time() if now is None else now
+    return duration - (now % duration)
+
+
+def playback_timeout(duration: int) -> float:
+    """How long the viewer should hold the current asset.
+
+    Plain ``duration`` normally; the remainder of the current clock
+    slot when ``clock_sync_playlist`` is on, so a switch lands exactly
+    on the boundary regardless of how long the asset took to load.
+    """
+    if settings['clock_sync_playlist'] and duration > 0:
+        return seconds_to_next_slot(duration)
+    return duration
 
 
 def get_specific_asset(asset_id: str) -> dict[str, Any] | None:
@@ -66,7 +104,7 @@ def generate_asset_list() -> tuple[list[dict[str, Any]], datetime | None]:
         _asset_to_dict(a) for a, ok in zip(candidates, active_flags) if ok
     ]
 
-    if settings['shuffle_playlist']:
+    if settings['shuffle_playlist'] and not settings['clock_sync_playlist']:
         _sysrandom.shuffle(playlist)
 
     deadline = _compute_deadline(candidates, active_flags, now)
@@ -155,7 +193,12 @@ class Scheduler:
         if not self.assets:
             self.current_asset_id = None
             return None
-        if self.reverse:
+        slot_duration = clock_sync_duration(self.assets)
+        if slot_duration:
+            idx = clock_slot(len(self.assets), slot_duration)
+            self.index = (idx + 1) % len(self.assets)
+            self.reverse = False
+        elif self.reverse:
             idx = (self.index - 2) % len(self.assets)
             self.index = (self.index - 1) % len(self.assets)
             self.reverse = False

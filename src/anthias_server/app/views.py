@@ -1745,7 +1745,12 @@ def settings_save(request: HttpRequest) -> HttpResponse:
         settings['default_assets'] = new_default_assets
 
         settings['show_splash'] = _checkbox(request, 'show_splash')
-        settings['shuffle_playlist'] = _checkbox(request, 'shuffle_playlist')
+        clock_sync = _checkbox(request, 'clock_sync_playlist')
+        settings['clock_sync_playlist'] = clock_sync
+        # Mutually exclusive with shuffle; clock sync wins if both are on.
+        settings['shuffle_playlist'] = (
+            _checkbox(request, 'shuffle_playlist') and not clock_sync
+        )
         settings['prefer_dark_mode'] = _checkbox(request, 'prefer_dark_mode')
         settings['use_24_hour_clock'] = _checkbox(request, 'use_24_hour_clock')
         settings['debug_logging'] = _checkbox(request, 'debug_logging')

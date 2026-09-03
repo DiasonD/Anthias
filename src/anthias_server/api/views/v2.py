@@ -579,6 +579,7 @@ class DeviceSettingsViewV2(APIView):
                 'show_splash': settings['show_splash'],
                 'default_assets': settings['default_assets'],
                 'shuffle_playlist': settings['shuffle_playlist'],
+                'clock_sync_playlist': settings['clock_sync_playlist'],
                 'use_24_hour_clock': settings['use_24_hour_clock'],
                 'debug_logging': settings['debug_logging'],
                 'prefer_dark_mode': settings['prefer_dark_mode'],
@@ -668,8 +669,17 @@ class DeviceSettingsViewV2(APIView):
                 elif not data['default_assets'] and settings['default_assets']:
                     remove_default_assets()
                 settings['default_assets'] = data['default_assets']
+            # Shuffle and clock sync are mutually exclusive: a shuffled
+            # order differs per device, which defeats the point of
+            # aligning to the clock. Turning one on clears the other.
             if 'shuffle_playlist' in data:
                 settings['shuffle_playlist'] = data['shuffle_playlist']
+                if data['shuffle_playlist']:
+                    settings['clock_sync_playlist'] = False
+            if 'clock_sync_playlist' in data:
+                settings['clock_sync_playlist'] = data['clock_sync_playlist']
+                if data['clock_sync_playlist']:
+                    settings['shuffle_playlist'] = False
             if 'use_24_hour_clock' in data:
                 settings['use_24_hour_clock'] = data['use_24_hour_clock']
             if 'debug_logging' in data:
@@ -749,7 +759,7 @@ def _evaluate_viewer_playlist(
     active_flags = [a.is_active(now=now) for a in candidates]
     active_assets = [a for a, ok in zip(candidates, active_flags) if ok]
 
-    if settings['shuffle_playlist']:
+    if settings['shuffle_playlist'] and not settings['clock_sync_playlist']:
         _viewer_sysrandom.shuffle(active_assets)
 
     deadline = _compute_viewer_deadline(candidates, active_flags, now)

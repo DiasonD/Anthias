@@ -47,6 +47,7 @@ def test_get_device_settings(
         'show_splash': True,
         'default_assets': [],
         'shuffle_playlist': False,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': True,
         'debug_logging': False,
         'prefer_dark_mode': True,
@@ -73,6 +74,7 @@ def test_get_device_settings(
         'show_splash': True,
         'default_assets': [],
         'shuffle_playlist': False,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': True,
         'debug_logging': False,
         'prefer_dark_mode': True,
@@ -102,6 +104,7 @@ def test_patch_device_settings_invalid_auth_backend(
         'show_splash': False,
         'default_assets': [],
         'shuffle_playlist': True,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': False,
         'debug_logging': True,
     }[key]
@@ -141,6 +144,7 @@ def test_patch_device_settings_success(
         'show_splash': False,
         'default_assets': [],
         'shuffle_playlist': True,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': False,
         'debug_logging': True,
     }[key]
@@ -296,6 +300,7 @@ def test_enable_basic_auth(
         'show_splash': False,
         'default_assets': [],
         'shuffle_playlist': True,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': False,
         'debug_logging': True,
     }[key]
@@ -368,6 +373,7 @@ def test_disable_basic_auth(
         'show_splash': True,
         'default_assets': [],
         'shuffle_playlist': False,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': True,
         'debug_logging': False,
         'prefer_dark_mode': False,
@@ -432,6 +438,7 @@ def test_patch_device_settings_default_assets(
         'show_splash': False,
         'default_assets': False,
         'shuffle_playlist': True,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': False,
         'debug_logging': True,
     }[key]
@@ -476,6 +483,7 @@ def test_patch_device_settings_default_assets(
         'show_splash': False,
         'default_assets': True,
         'shuffle_playlist': True,
+        'clock_sync_playlist': False,
         'use_24_hour_clock': False,
         'debug_logging': True,
     }[key]

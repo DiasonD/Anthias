@@ -72,7 +72,7 @@ from anthias_server.django_project.settings import (
     resolve_time_zone,
 )
 from anthias_viewer.messaging import ViewerSubscriber
-from anthias_viewer.scheduling import Scheduler
+from anthias_viewer.scheduling import Scheduler, playback_timeout
 
 logger = logging.getLogger(__name__)
 
@@ -2457,10 +2457,11 @@ def asset_loop(scheduler: Any) -> None:
             logger.error('Unknown MimeType %s', mime)
 
         if 'image' in mime or 'web' in mime:
-            logger.info('Sleeping for %s', duration)
+            timeout = playback_timeout(duration)
+            logger.info('Sleeping for %s', timeout)
             skip_event = get_skip_event()
             skip_event.clear()
-            if skip_event.wait(timeout=duration):
+            if skip_event.wait(timeout=timeout):
                 # Skip was triggered, continue immediately to next iteration
                 logger.info('Skip detected, moving to next asset immediately')
             else:

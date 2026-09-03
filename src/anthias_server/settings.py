@@ -67,6 +67,7 @@ DEFAULTS = {
         'screen_rotation': 0,
         'show_splash': True,
         'shuffle_playlist': False,
+        'clock_sync_playlist': False,
         'verify_ssl': True,
         'default_assets': False,
     },

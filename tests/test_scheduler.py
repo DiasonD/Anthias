@@ -13,7 +13,10 @@ from anthias_server.settings import settings
 from anthias_viewer.scheduling import (
     WINDOWED_DEADLINE_CAP_SECONDS,
     Scheduler,
+    clock_slot,
     generate_asset_list,
+    playback_timeout,
+    seconds_to_next_slot,
 )
 
 logging.disable(logging.CRITICAL)
@@ -599,3 +602,67 @@ def test_shuffle_refresh_picks_up_field_edits_when_membership_unchanged(
     assert [x['asset_id'] for x in scheduler.assets] == original_order
     refreshed = next(x for x in scheduler.assets if x['asset_id'] == 'b')
     assert refreshed['duration'] == 999
+
+
+# --- clock_sync_playlist ---------------------------------------------------
+
+
+@pytest.fixture
+def clock_sync_on() -> Iterator[None]:
+    settings['clock_sync_playlist'] = True
+    try:
+        yield
+    finally:
+        settings['clock_sync_playlist'] = False
+
+
+def test_seconds_to_next_slot_is_remainder_of_current_slot() -> None:
+    assert seconds_to_next_slot(30, now=65.0) == 25.0
+    assert seconds_to_next_slot(30, now=90.0) == 30.0
+
+
+def test_clock_slot_wraps_over_playlist_length() -> None:
+    # Slots of 6s: 13s -> slot 2 -> index 0 of 2; 19s -> slot 3 -> index 1.
+    assert clock_slot(2, 6, now=13.0) == 0
+    assert clock_slot(2, 6, now=19.0) == 1
+
+
+def test_playback_timeout_is_plain_duration_when_clock_sync_off() -> None:
+    assert playback_timeout(30) == 30
+
+
+def test_playback_timeout_lands_on_boundary_when_clock_sync_on(
+    clock_sync_on: None,
+) -> None:
+    with time_machine.travel(datetime.fromtimestamp(65, tz=UTC), tick=False):
+        assert playback_timeout(30) == 25
+
+
+@pytest.mark.django_db
+def test_clock_sync_picks_asset_from_wall_clock(
+    restore_shuffle_setting: None, clock_sync_on: None
+) -> None:
+    # ASSET_Y (play_order 0, duration 6) is first, so the slot is 6s wide.
+    _create_assets([ASSET_X, ASSET_Y])
+    scheduler = Scheduler()
+
+    with time_machine.travel(datetime.fromtimestamp(13, tz=UTC), tick=False):
+        assert scheduler.get_next_asset()['asset_id'] == ASSET_Y['asset_id']
+        # Same slot again: the position is derived from the clock, not
+        # from how often get_next_asset() was called.
+        assert scheduler.get_next_asset()['asset_id'] == ASSET_Y['asset_id']
+
+    with time_machine.travel(datetime.fromtimestamp(19, tz=UTC), tick=False):
+        assert scheduler.get_next_asset()['asset_id'] == ASSET_X['asset_id']
+
+
+@pytest.mark.django_db
+def test_clock_sync_disables_shuffle(
+    restore_shuffle_setting: None, clock_sync_on: None
+) -> None:
+    settings['shuffle_playlist'] = True
+    _create_assets([ASSET_X, ASSET_Y, ASSET_Z])
+
+    assets, _ = generate_asset_list()
+
+    assert [a['play_order'] for a in assets] == [0, 1, 2]
